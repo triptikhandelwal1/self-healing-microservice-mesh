@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Healing Microservice Mesh</title>
+<style>
+:root{--bg:#0b1220;--panel:#121b2e;--panel2:#18243b;--line:#243250;--text:#e6edf7;--mute:#8fa0bd;
+--green:#34d399;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--teal:#2dd4bf;--orange:#fb923c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:16px 28px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;font-weight:800;color:#06222a}
+h1{font-size:18px;margin:0}.sub{color:var(--mute);font-size:12px}
+.grow{flex:1}
+.pill{padding:6px 14px;border-radius:999px;font-weight:600;font-size:13px;border:1px solid}
+.pill.ok{color:var(--green);border-color:#1e6b52;background:#0f2a24}
+.pill.warn{color:var(--amber);border-color:#7a5b12;background:#2b2410}
+.pill.bad{color:var(--red);border-color:#7a2b2b;background:#2c1517}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:6px 12px}
+button:hover{border-color:var(--blue)}
+.tgl.on{background:#10302b;border-color:#1e6b52;color:var(--green)}
+main{padding:22px 28px;display:grid;grid-template-columns:1fr 330px;gap:22px;max-width:1500px;margin:auto}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+.hint{grid-column:1/-1;background:linear-gradient(90deg,#0f2a3a,#12213a);border:1px solid #214a66;border-radius:12px;padding:12px 16px;color:#b7d4ea}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi b{display:block;font-size:26px;margin-top:2px}.kpi span{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.svcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.svc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.svc-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.svc-h h2{margin:0;font-size:16px}
+.scale{display:flex;align-items:center;gap:6px;margin-left:auto;color:var(--mute);font-size:12px}
+.scale button{padding:0 9px;line-height:24px}
+.spark{width:100%;height:44px;margin:6px 0 10px;display:block}
+.rate{font-size:12px;color:var(--mute);display:flex;justify-content:space-between}
+.rep{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:10px;padding:10px 12px;margin-top:10px}
+.rep.healthy{border-left-color:var(--green)}.rep.suspect{border-left-color:var(--amber)}
+.rep.unhealthy{border-left-color:var(--red)}
+.rep-h{display:flex;align-items:center;gap:8px}
+.rep-h b{font-size:14px}
+.badge{margin-left:auto;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 9px;border-radius:999px}
+.badge.healthy{background:#10302b;color:var(--green)}.badge.suspect{background:#2f2711;color:var(--amber)}
+.badge.unhealthy{background:#341a1d;color:var(--red)}.badge.restarting,.badge.starting{background:#142842;color:var(--blue)}
+.meta{color:var(--mute);font-size:12px;margin:4px 0 8px;display:flex;gap:12px;flex-wrap:wrap}
+.fault{color:var(--orange);font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts button{font-size:12px;padding:3px 9px}
+.acts .danger:hover{border-color:var(--red);color:var(--red)}
+.acts .heal:hover{border-color:var(--green);color:var(--green)}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;align-self:start;position:sticky;top:16px}
+aside h3{margin:0 0 10px;font-size:15px}
+.ev{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #1a2640;font-size:13px}
+.ev i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--blue)}
+.ev.ok i{background:var(--green)}.ev.warn i{background:var(--amber)}.ev.bad i{background:var(--red)}
+.ev time{color:var(--mute);font-size:11px;display:block}
+.log{max-height:640px;overflow:auto}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--mute);font-size:12px;margin:2px 0 14px}
+.legend span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--c)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">M</div>
+  <div><h1>Self-Healing Microservice Mesh</h1><div class="sub">Go control plane &middot; health probes &middot; auto-restart &middot; smart routing</div></div>
+  <div class="grow"></div>
+  <span id="status" class="pill ok">Connecting...</span>
+  <button id="traffic" class="tgl">&#9654; Start traffic</button>
+  <div class="sub" id="uptime"></div>
+</header>
+<main>
+  <div class="hint"><b>Try it:</b> start traffic, then press <b>Crash</b>, <b>Hang</b>, <b>Slow</b> or <b>Errors</b> on any replica.
+  Watch it turn amber, then red, leave rotation, restart and come back green, while the success rate stays high.</div>
+  <section>
+    <div class="kpis" id="kpis"></div>
+    <div class="legend"><span style="--c:var(--green)">Healthy</span><span style="--c:var(--amber)">Suspect (1 failed probe)</span><span style="--c:var(--red)">Unhealthy (removed from routing)</span><span style="--c:var(--blue)">Starting / restarting</span></div>
+    <div class="svcs" id="svcs"></div>
+  </section>
+  <aside><h3>Event timeline</h3><div class="log" id="log"></div></aside>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const post = (url, params) => fetch(url + "?" + new URLSearchParams(params), {method: "POST"});
+let traffic = false;
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "traffic") post("/api/traffic", {on: !traffic});
+  else if (b.dataset.mode) post("/api/chaos", {id: b.dataset.id, mode: b.dataset.mode});
+  else if (b.dataset.scale) post("/api/scale", {service: b.dataset.svc, delta: b.dataset.scale});
+});
+
+function spark(h) {
+  if (!h || !h.length) return '<svg class="spark"></svg>';
+  const w = 280, ht = 44, n = Math.max(h.length - 1, 1);
+  const pts = h.map((v, i) => `${(i / n * w).toFixed(1)},${(ht - 4 - v / 100 * (ht - 8)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${ht}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="#2dd4bf" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function replica(r) {
+  const fault = r.fault ? `<span class="fault">fault: ${r.fault}</span>` : "";
+  const btn = (m, label, cls = "") => `<button class="${cls}" data-id="${r.id}" data-mode="${m}">${label}</button>`;
+  return `<div class="rep ${r.state}">
+    <div class="rep-h"><b>${r.id}</b><span class="sub">:${r.port}</span><span class="badge ${r.state}">${r.state}</span></div>
+    <div class="meta"><span>latency ${r.latencyMs} ms</span><span>restarts ${r.restarts}</span><span>failed probes ${r.fails}</span>${fault}</div>
+    <div class="acts">${btn("crash", "Crash", "danger")}${btn("hang", "Hang")}${btn("slow", "Slow")}${btn("errors", "Errors")}${btn("heal", "Heal", "heal")}</div>
+  </div>`;
+}
+
+function render(s) {
+  const reps = s.services.flatMap(v => v.replicas || []);
+  const healthy = reps.filter(r => r.state === "healthy").length;
+  const bad = reps.filter(r => r.state === "unhealthy" || r.state === "restarting").length;
+  const sus = reps.filter(r => r.state === "suspect" || r.state === "starting").length;
+  const desired = s.services.reduce((a, v) => a + v.desired, 0);
+  const rate = s.total ? (100 * s.okTotal / s.total).toFixed(1) + "%" : "&ndash;";
+  const st = $("status");
+  if (bad) { st.className = "pill bad"; st.textContent = "Healing: " + bad + " replica" + (bad > 1 ? "s" : "") + " down"; }
+  else if (sus || healthy < desired) { st.className = "pill warn"; st.textContent = "Degraded"; }
+  else { st.className = "pill ok"; st.textContent = "All systems healthy"; }
+
+  traffic = s.traffic;
+  $("traffic").className = "tgl" + (traffic ? " on" : "");
+  $("traffic").innerHTML = traffic ? "&#9632; Stop traffic" : "&#9654; Start traffic";
+  $("uptime").textContent = "uptime " + s.uptime + "s";
+
+  const k = (label, val, sub) => `<div class="kpi"><span>${label}</span><b>${val}</b><div class="sub">${sub}</div></div>`;
+  $("kpis").innerHTML =
+    k("Healthy replicas", healthy + " / " + desired, "desired state: " + desired) +
+    k("Request success", rate, s.total + " requests routed") +
+    k("Avg detection (MTTD)", s.avgMttd ? s.avgMttd.toFixed(1) + " s" : "&ndash;", "fault to unhealthy") +
+    k("Avg recovery (MTTR)", s.avgMttr ? s.avgMttr.toFixed(1) + " s" : "&ndash;", s.recoveries + " auto-recoveries");
+
+  $("svcs").innerHTML = s.services.map(v => {
+    const r = v.total ? (100 * v.ok / v.total).toFixed(1) + "%" : "&ndash;";
+    return `<div class="svc">
+      <div class="svc-h"><h2>Service ${v.name.toUpperCase()}</h2>
+        <div class="scale">replicas <button data-svc="${v.name}" data-scale="-1">&minus;</button><b>${v.desired}</b><button data-svc="${v.name}" data-scale="1">+</button></div></div>
+      <div class="rate"><span>success rate (last 60 s)</span><b>${r}</b></div>${spark(v.history)}
+      ${(v.replicas || []).map(replica).join("") || '<div class="sub">no replicas</div>'}</div>`;
+  }).join("");
+
+  $("log").innerHTML = (s.events || []).map(e => `<div class="ev ${e.kind}"><i></i><div><time>${e.time}</time>${e.msg}</div></div>`).join("");
+}
+
+async function tick() {
+  try { render(await (await fetch("/api/state")).json()); }
+  catch (e) { $("status").className = "pill bad"; $("status").textContent = "Control plane offline"; }
+}
+tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
