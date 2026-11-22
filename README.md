@@ -11,11 +11,11 @@ A group of deliberately fragile microservices is monitored by a Go **control pla
 | Name | Student ID |
 |---|---|
 | Tripti | 2301010278 |
+| Aman | 2301010277 |
 | Rizpah | 2301010219 |
 | Raghuveer | 2301010268 |
 | Ayush | 2301010253 |
-| Aman | 2301010277 |
-| Sarthak | 2301010216 |
+
 
 ## 1. Objectives
 
