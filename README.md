@@ -140,3 +140,6 @@ The project presentation is available in the repository as `Self_Healing_Mesh_pp
 **Project:** Self-Healing Microservice Mesh  
 **Language:** Go  
 **Evaluation:** Final Phase Evaluation
+## Project Presentation
+
+[View Project Presentation](phase-3-presentation.pptx)
