@@ -4,6 +4,10 @@ A small, fully working **self-healing microservice system written in Go**.
 
 A group of deliberately fragile microservices is monitored by a Go **control plane** that detects failures through goroutine-based health checks, automatically restarts broken services, and re-routes traffic to healthy replicas.
 
+## Live Demo
+
+[Open Live Project](https://self-healing-microservice-mesh.onrender.com)
+
 **Phase-II Capstone Project**
 
 ## Owner
