@@ -13,10 +13,10 @@ FROM alpine:latest
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates
+
 COPY --from=builder /controlplane /app/controlplane
-COPY --from=builder /service /app/service
-COPY --from=builder /app/cmd/controlplane/web /app/cmd/controlplane/web
+COPY --from=builder /service /app/bin/service
 
 EXPOSE 8080
 
-CMD ["/app/controlplane"]
+CMD ["sh", "-c", "/app/controlplane -addr 0.0.0.0:${PORT:-8080}"]
